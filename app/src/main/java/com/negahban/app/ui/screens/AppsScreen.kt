@@ -175,5 +175,6 @@ fun AppsScreen(modifier: Modifier = Modifier) {
                 item { Spacer(Modifier.height(16.dp)) }
             }
         }
+        }
     }
 }
