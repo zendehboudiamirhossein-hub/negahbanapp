@@ -1,0 +1,18 @@
+*.iml
+.gradle/
+local.properties
+.idea/
+.DS_Store
+build/
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Keystore files (never commit these)
+*.jks
+*.keystore
+
+# GitHub Actions / CI
+!.github/
+!.github/workflows/
+!.gitattributes

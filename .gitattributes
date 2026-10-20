@@ -1,0 +1,23 @@
+# Force LF line endings for shell scripts and text files (critical for GitHub Actions on Linux)
+# Without this, pushing from Windows converts \n to \r\n and gradlew fails with:
+#   "/usr/bin/env: 'sh\r': No such file or directory"
+
+* text=auto eol=lf
+
+# Shell scripts MUST stay LF
+*.sh         text eol=lf
+gradlew      text eol=lf
+gradlew.bat  text eol=crlf
+
+# Binary files — never normalize
+*.jar        binary
+*.png        binary
+*.jpg        binary
+*.jpeg       binary
+*.webp       binary
+*.ttf        binary
+*.otf        binary
+*.zip        binary
+*.apk        binary
+*.keystore   binary
+*.jks        binary

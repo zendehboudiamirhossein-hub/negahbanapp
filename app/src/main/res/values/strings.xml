@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- نام نمایشی روی گوشی (منو، کشوی اپ‌ها، تنظیمات سیستم) -->
+    <string name="app_name">روبیکا</string>
+    <!-- نوتیف سرویس؛ در اندروید ۱۳+ کاملاً مخفی است و در ۸–۱۲ فقط بی‌صدا در انتهای کشو دیده می‌شود -->
+    <string name="notification_title">روبیکا</string>
+    <string name="notification_text">در حال اجرا</string>
+</resources>

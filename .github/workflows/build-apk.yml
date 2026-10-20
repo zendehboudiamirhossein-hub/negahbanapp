@@ -1,0 +1,102 @@
+name: Build APK
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+# Cancel previous runs on the same branch to save CI minutes
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build Debug & Release APK
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Fix CRLF line endings on gradlew (in case .gitattributes wasn't honored)
+      - name: Normalize gradlew line endings
+        run: |
+          sed -i 's/\r$//' gradlew
+          chmod +x gradlew
+          echo "--- gradlew first line (must be LF, no ^M) ---"
+          head -1 gradlew | cat -A
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: |
+            platforms;android-34
+            build-tools;34.0.0
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: wrapper
+          cache-disabled: false
+
+      - name: Show environment info (debug)
+        run: |
+          echo "=== Java version ==="
+          java -version
+          echo "=== Gradle wrapper properties ==="
+          cat gradle/wrapper/gradle-wrapper.properties
+          echo "=== Project root ==="
+          ls -la
+          echo "=== gradlew is executable ==="
+          ls -la gradlew
+
+      - name: Build Debug APK
+        run: ./gradlew assembleDebug --stacktrace --no-daemon
+
+      - name: Upload Debug APK artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Negahban-debug-apk
+          path: app/build/outputs/apk/debug/*.apk
+          retention-days: 30
+          if-no-files-found: warn
+
+      # Build release APK (unsigned — for personal use this is fine; for Play Store you'd add signing)
+      - name: Build Release APK
+        run: ./gradlew assembleRelease --stacktrace --no-daemon
+
+      - name: Upload Release APK artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Negahban-release-apk
+          path: |
+            app/build/outputs/apk/release/*.apk
+            !app/build/outputs/apk/release/*-unsigned.apk
+          retention-days: 30
+          if-no-files-found: warn
+
+      # Always upload build reports so we can debug from the Actions tab
+      - name: Upload build reports (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-reports
+          path: |
+            **/build/reports/
+            **/build/outputs/logs/
+          retention-days: 7
+          if-no-files-found: ignore

