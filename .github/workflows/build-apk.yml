@@ -24,7 +24,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Fix CRLF line endings on gradlew (in case .gitattributes wasn't honored)
+      # Fix CRLF line endings on gradlew (in case .gitattributes wasn't honored on Windows push)
       - name: Normalize gradlew line endings
         run: |
           sed -i 's/\r$//' gradlew
@@ -38,18 +38,25 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-        with:
-          packages: |
-            platforms;android-34
-            build-tools;34.0.0
+      # The ubuntu-latest runner ALREADY has Android SDK preinstalled with:
+      #   - platforms;android-34
+      #   - build-tools;34.0.0
+      #   - platform-tools
+      #   - cmdline-tools
+      # We only need to make the SDK location available to Gradle.
+      - name: Configure Android SDK location
+        run: |
+          echo "ANDROID_HOME=${ANDROID_HOME}" >> $GITHUB_ENV
+          echo "ANDROID_SDK_ROOT=${ANDROID_SDK_ROOT}" >> $GITHUB_ENV
+          echo "--- Installed platforms ---"
+          ls -1 ${ANDROID_HOME}/platforms 2>/dev/null || true
+          echo "--- Installed build-tools ---"
+          ls -1 ${ANDROID_HOME}/build-tools 2>/dev/null || true
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
         with:
           gradle-version: wrapper
-          cache-disabled: false
 
       - name: Show environment info (debug)
         run: |
@@ -66,8 +73,8 @@ jobs:
         run: ./gradlew assembleDebug --stacktrace --no-daemon
 
       - name: Upload Debug APK artifact
-        uses: actions/upload-artifact@v4
         if: always()
+        uses: actions/upload-artifact@v4
         with:
           name: Negahban-debug-apk
           path: app/build/outputs/apk/debug/*.apk
@@ -79,13 +86,11 @@ jobs:
         run: ./gradlew assembleRelease --stacktrace --no-daemon
 
       - name: Upload Release APK artifact
-        uses: actions/upload-artifact@v4
         if: always()
+        uses: actions/upload-artifact@v4
         with:
           name: Negahban-release-apk
-          path: |
-            app/build/outputs/apk/release/*.apk
-            !app/build/outputs/apk/release/*-unsigned.apk
+          path: app/build/outputs/apk/release/*.apk
           retention-days: 30
           if-no-files-found: warn
 
